@@ -92,3 +92,50 @@ func TestSubnet(t *testing.T) {
 		}
 	}
 }
+
+func TestHost(t *testing.T) {
+	type Case struct {
+		Range  string
+		Num    int
+		Output string
+		Error  bool
+	}
+
+	cases := []Case{
+		Case{
+			Range:  "192.168.2.0/20",
+			Num:    6,
+			Output: "192.168.0.6",
+		},
+		Case{
+			Range:  "192.168.0.0/20",
+			Num:    257,
+			Output: "192.168.1.1",
+		},
+		Case{
+			Range: "192.168.1.0/24",
+			Num:   256,
+			Error: true, // only 0-255 will fit in 8 bits
+		},
+	}
+
+	for _, testCase := range cases {
+		_, network, _ := net.ParseCIDR(testCase.Range)
+		gotIP, err := Host(network, testCase.Num)
+		desc := fmt.Sprintf("Host(%#v,%#v)", testCase.Range, testCase.Num)
+		if err != nil {
+			if !testCase.Error {
+				t.Errorf("%s failed: %s", desc, err.Error())
+			}
+		} else {
+			got := gotIP.String()
+			if testCase.Error {
+				t.Errorf("%s = %s; want error", desc, got)
+			} else {
+				if got != testCase.Output {
+					t.Errorf("%s = %s; want %s", desc, got, testCase.Output)
+				}
+			}
+		}
+	}
+}

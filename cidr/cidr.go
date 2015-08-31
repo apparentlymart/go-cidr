@@ -47,3 +47,22 @@ func Subnet(base *net.IPNet, newBits int, num int) (*net.IPNet, error) {
 		Mask: net.CIDRMask(newPrefixLen, addrLen),
 	}, nil
 }
+
+// Host takes a parent CIDR range and turns it into a host IP address with
+// the given host number.
+//
+// For example, 10.3.0.0/16 with a host number of 2 gives 10.3.0.2.
+func Host(base *net.IPNet, num int) (net.IP, error) {
+	ip := base.IP
+	mask := base.Mask
+
+	parentLen, addrLen := mask.Size()
+	hostLen := addrLen - parentLen
+
+	maxHostNum := uint64(1<<uint64(hostLen)) - 1
+	if uint64(num) > maxHostNum {
+		return nil, fmt.Errorf("prefix of %d does not accommodate a host numbered %d", parentLen, num)
+	}
+
+	return insertNumIntoIP(ip, num, 32), nil
+}
