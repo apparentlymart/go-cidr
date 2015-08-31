@@ -139,3 +139,44 @@ func TestHost(t *testing.T) {
 		}
 	}
 }
+
+func TestAddressRange(t *testing.T) {
+	type Case struct {
+		Range string
+		First string
+		Last  string
+	}
+
+	cases := []Case{
+		Case{
+			Range: "192.168.0.0/16",
+			First: "192.168.0.0",
+			Last:  "192.168.255.255",
+		},
+		Case{
+			Range: "192.168.0.0/17",
+			First: "192.168.0.0",
+			Last:  "192.168.127.255",
+		},
+		Case{
+			Range: "fe80::/64",
+			First: "fe80::",
+			Last:  "fe80::ffff:ffff:ffff:ffff",
+		},
+	}
+
+	for _, testCase := range cases {
+		_, network, _ := net.ParseCIDR(testCase.Range)
+		firstIP, lastIP := AddressRange(network)
+		desc := fmt.Sprintf("AddressRange(%#v)", testCase.Range)
+		gotFirstIP := firstIP.String()
+		gotLastIP := lastIP.String()
+		if gotFirstIP != testCase.First {
+			t.Errorf("%s first is %s; want %s", desc, gotFirstIP, testCase.First)
+		}
+		if gotLastIP != testCase.Last {
+			t.Errorf("%s last is %s; want %s", desc, gotLastIP, testCase.Last)
+		}
+	}
+
+}

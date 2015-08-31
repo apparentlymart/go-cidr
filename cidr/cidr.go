@@ -17,6 +17,7 @@ package cidr
 
 import (
 	"fmt"
+	"math/big"
 	"net"
 )
 
@@ -65,4 +66,30 @@ func Host(base *net.IPNet, num int) (net.IP, error) {
 	}
 
 	return insertNumIntoIP(ip, num, 32), nil
+}
+
+// AddressRange returns the first and last addresses in the given CIDR range.
+func AddressRange(network *net.IPNet) (net.IP, net.IP) {
+	// the first IP is easy
+	firstIP := network.IP
+
+	// the last IP is the network address OR NOT the mask address
+	prefixLen, bits := network.Mask.Size()
+	if prefixLen == bits {
+		// Easy!
+		// But make sure that our two slices are distinct, since they
+		// would be in all other cases.
+		lastIP := make([]byte, len(firstIP))
+		copy(lastIP, firstIP)
+		return firstIP, lastIP
+	}
+
+	firstIPInt, bits := ipToInt(firstIP)
+	hostLen := uint(bits) - uint(prefixLen)
+	lastIPInt := big.NewInt(1)
+	lastIPInt.Lsh(lastIPInt, hostLen)
+	lastIPInt.Sub(lastIPInt, big.NewInt(1))
+	lastIPInt.Or(lastIPInt, firstIPInt)
+
+	return firstIP, intToIP(lastIPInt, bits)
 }
