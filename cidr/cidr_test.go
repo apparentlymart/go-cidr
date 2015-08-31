@@ -180,3 +180,59 @@ func TestAddressRange(t *testing.T) {
 	}
 
 }
+
+func TestAddressCount(t *testing.T) {
+	type Case struct {
+		Range string
+		Count uint64
+	}
+
+	cases := []Case{
+		Case{
+			Range: "192.168.0.0/16",
+			Count: 65536,
+		},
+		Case{
+			Range: "192.168.0.0/17",
+			Count: 32768,
+		},
+		Case{
+			Range: "192.168.0.0/32",
+			Count: 1,
+		},
+		Case{
+			Range: "192.168.0.0/31",
+			Count: 2,
+		},
+		Case{
+			Range: "0.0.0.0/0",
+			Count: 4294967296,
+		},
+		Case{
+			Range: "0.0.0.0/1",
+			Count: 2147483648,
+		},
+		Case{
+			Range: "::/65",
+			Count: 9223372036854775808,
+		},
+		Case{
+			Range: "::/128",
+			Count: 1,
+		},
+		Case{
+			Range: "::/127",
+			Count: 2,
+		},
+	}
+
+	for _, testCase := range cases {
+		_, network, _ := net.ParseCIDR(testCase.Range)
+		gotCount := AddressCount(network)
+		desc := fmt.Sprintf("AddressCount(%#v)", testCase.Range)
+		if gotCount != testCase.Count {
+			t.Errorf("%s = %d; want %d", desc, gotCount, testCase.Count)
+		}
+	}
+
+}

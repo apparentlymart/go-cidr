@@ -93,3 +93,13 @@ func AddressRange(network *net.IPNet) (net.IP, net.IP) {
 
 	return firstIP, intToIP(lastIPInt, bits)
 }
+
+// AddressCount returns the number of distinct host addresses within the given
+// CIDR range.
+//
+// Since the result is a uint64, this function returns meaningful information
+// only for IPv4 ranges and IPv6 ranges with a prefix size of at least 65.
+func AddressCount(network *net.IPNet) uint64 {
+	prefixLen, bits := network.Mask.Size()
+	return 1 << (uint64(bits) - uint64(prefixLen))
+}
