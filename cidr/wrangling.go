@@ -7,22 +7,32 @@ import (
 )
 
 func ipToInt(ip net.IP) (*big.Int, int) {
+	val := &big.Int{}
+	val.SetBytes([]byte(ip))
 	if len(ip) == net.IPv4len {
-		return big.NewInt(int64(int32(ip[0])<<24 | int32(ip[1])<<16 | int32(ip[2])<<8 | int32(ip[3]))), 32
+		return val, 32
 	} else if len(ip) == net.IPv6len {
-		bottom := big.NewInt(int64(
-			uint64(ip[0])<<56 | uint64(ip[1])<<48 | uint64(ip[2])<<40 |
-			uint64(ip[3])<<32 | uint64(ip[4])<<24 | uint64(ip[5])<<16 |
-			uint64(ip[6])<<8 | uint64(ip[7]),
-		))
-		top := big.NewInt(int64(
-			uint64(ip[8])<<56 | uint64(ip[9])<<48 | uint64(ip[10])<<40 |
-			uint64(ip[11])<<32 | uint64(ip[12])<<24 | uint64(ip[13])<<16 |
-			uint64(ip[14])<<8 | uint64(ip[15]),
-		))
-		bottom.Lsh(bottom, 64)
-		return bottom.Or(bottom, top), 128
+		return val, 128
 	} else {
 		panic(fmt.Errorf("Unsupported address length %d", len(ip)))
 	}
+}
+
+func intToIP(ipInt *big.Int, bits int) net.IP {
+	ipBytes := ipInt.Bytes()
+	ret := make([]byte, bits/8)
+	// Pack our IP bytes into the end of the return array,
+	// since big.Int.Bytes() removes front zero padding.
+	for i := 1; i <= len(ipBytes); i++ {
+		ret[len(ret)-i] = ipBytes[len(ipBytes)-i]
+	}
+	return net.IP(ret)
+}
+
+func insertNumIntoIP(ip net.IP, num int, prefixLen int) net.IP {
+	ipInt, totalBits := ipToInt(ip)
+	bigNum := big.NewInt(int64(num))
+	bigNum.Lsh(bigNum, uint(totalBits-prefixLen))
+	ipInt.Or(ipInt, bigNum)
+	return intToIP(ipInt, totalBits)
 }
