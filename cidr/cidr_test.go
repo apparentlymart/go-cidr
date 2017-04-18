@@ -117,6 +117,21 @@ func TestHost(t *testing.T) {
 			Num:   256,
 			Error: true, // only 0-255 will fit in 8 bits
 		},
+		Case{
+			Range:  "192.168.0.0/30",
+			Num:    -3,
+			Output: "192.168.0.1", // 4 address (0-3) in 2 bits; 3rd from end = 1
+		},
+		Case{
+			Range:  "192.168.0.0/30",
+			Num:    -4,
+			Output: "192.168.0.0", // 4 address (0-3) in 2 bits; 4th from end = 0
+		},
+		Case{
+			Range:  "192.168.0.0/30",
+			Num:    -5,
+			Error:  true, // 4 address (0-3) in 2 bits; cannot accomodate 5
+		},
 	}
 
 	for _, testCase := range cases {
