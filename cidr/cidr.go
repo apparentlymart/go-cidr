@@ -111,10 +111,10 @@ func AddressCount(network *net.IPNet) uint64 {
 	return 1 << (uint64(bits) - uint64(prefixLen))
 }
 
-//VerifyNetwork takes a list subnets and supernet (CIDRBlock) and verifies
+//VerifyNoOverlap takes a list subnets and supernet (CIDRBlock) and verifies
 //none of the subnets overlap and all subnets are in the supernet
 //it returns an error if any of those conditions are not satisfied
-func VerifyNetwork(subnets []*net.IPNet, CIDRBlock *net.IPNet) error {
+func VerifyNoOverlap(subnets []*net.IPNet, CIDRBlock *net.IPNet) error {
 	firstLastIP := make([][]net.IP, len(subnets))
 	for i, s := range subnets {
 		first, last := AddressRange(s)
@@ -138,11 +138,11 @@ func VerifyNetwork(subnets []*net.IPNet, CIDRBlock *net.IPNet) error {
 // PreviousSubnet returns the subnet of the desired mask in the IP space
 // just lower than the start of IPNet provided. If the IP space rolls over
 // then the second return value is true
-func PreviousSubnet(startNet *net.IPNet, mask int) (*net.IPNet, bool) {
-	startIP := checkIPv4(startNet.IP)
+func PreviousSubnet(network *net.IPNet, prefixLen int) (*net.IPNet, bool) {
+	startIP := checkIPv4(network.IP)
 	previousIP := make(net.IP, len(startIP))
 	copy(previousIP, startIP)
-	cMask := net.CIDRMask(mask, 8*len(previousIP))
+	cMask := net.CIDRMask(prefixLen, 8*len(previousIP))
 	previousIP = Dec(previousIP)
 	previous := &net.IPNet{IP: previousIP.Mask(cMask), Mask: cMask}
 	if startIP.Equal(net.IPv4zero) || startIP.Equal(net.IPv6zero) {
@@ -154,9 +154,9 @@ func PreviousSubnet(startNet *net.IPNet, mask int) (*net.IPNet, bool) {
 // NextSubnet returns the next available subnet of the desired mask size
 // starting for the maximum IP of the offset subnet
 // If the IP exceeds the maxium IP then the second return value is true
-func NextSubnet(offset *net.IPNet, desiredMask int) (*net.IPNet, bool) {
-	_, currentLast := AddressRange(offset)
-	mask := net.CIDRMask(desiredMask, 8*len(currentLast))
+func NextSubnet(network *net.IPNet, prefixLen int) (*net.IPNet, bool) {
+	_, currentLast := AddressRange(network)
+	mask := net.CIDRMask(prefixLen, 8*len(currentLast))
 	currentSubnet := &net.IPNet{IP: currentLast.Mask(mask), Mask: mask}
 	_, last := AddressRange(currentSubnet)
 	last = Inc(last)
@@ -167,28 +167,33 @@ func NextSubnet(offset *net.IPNet, desiredMask int) (*net.IPNet, bool) {
 	return next, false
 }
 
-//Inc increases the IP by one
-func Inc(ip net.IP) net.IP {
-	ip = checkIPv4(ip)
-	for j := len(ip) - 1; j >= 0; j-- {
-		ip[j]++
-		if ip[j] > 0 {
+//Inc increases the IP by one this returns a new []byte for the IP
+func Inc(IP net.IP) net.IP {
+	IP = checkIPv4(IP)
+	incIP := make([]byte, len(IP))
+	copy(incIP, IP)
+	for j := len(incIP) - 1; j >= 0; j-- {
+		incIP[j]++
+		if incIP[j] > 0 {
 			break
 		}
 	}
-	return ip
+	return incIP
 }
 
-//Dec decreases the IP by one
-func Dec(ip net.IP) net.IP {
-	ip = checkIPv4(ip)
-	for j := len(ip) - 1; j >= 0; j-- {
-		ip[j]--
-		if ip[j] < 255 {
+//Dec decreases the IP by one this returns a new []byte for the IP
+func Dec(IP net.IP) net.IP {
+	IP = checkIPv4(IP)
+	decIP := make([]byte, len(IP))
+	copy(decIP, IP)
+	decIP = checkIPv4(decIP)
+	for j := len(decIP) - 1; j >= 0; j-- {
+		decIP[j]--
+		if decIP[j] < 255 {
 			break
 		}
 	}
-	return ip
+	return decIP
 }
 
 func checkIPv4(ip net.IP) net.IP {

@@ -269,19 +269,25 @@ func TestIncDec(t *testing.T) {
 	for _, tc := range testCase {
 		ip1 := net.ParseIP(tc[0])
 		ip2 := net.ParseIP(tc[1])
-		Inc(ip1)
-		if !ip1.Equal(ip2) {
-			t.Logf("%s should equal %s\n", tc[0], tc[1])
-			t.Errorf("%v should equal %v\n", ip1, ip2)
+		iIP := Inc(ip1)
+		if !iIP.Equal(ip2) {
+			t.Logf("%s should inc to equal %s\n", tc[0], tc[1])
+			t.Errorf("%v should equal %v\n", iIP, ip2)
+		}
+		if ip1.Equal(ip2) {
+			t.Errorf("[%v] should not have been modified to [%v]", ip2, iIP)
 		}
 	}
 	for _, tc := range testCase {
 		ip1 := net.ParseIP(tc[0])
 		ip2 := net.ParseIP(tc[1])
-		Dec(ip2)
-		if !ip1.Equal(ip2) {
-			t.Logf("%s should equal %s\n", tc[0], tc[1])
-			t.Errorf("%v should equal %v\n", ip1, ip2)
+		dIP := Dec(ip2)
+		if !ip1.Equal(dIP) {
+			t.Logf("%s should dec equal %s\n", tc[0], tc[1])
+			t.Errorf("%v should equal %v\n", ip1, dIP)
+		}
+		if ip2.Equal(dIP) {
+			t.Errorf("[%v] should not have been modified to [%v]", ip2, dIP)
 		}
 	}
 }
@@ -401,7 +407,7 @@ func TestVerifyNetowrk(t *testing.T) {
 		if perr != nil {
 			t.Errorf("Bad test data %s\n", tc.CIDRBlock)
 		}
-		test := VerifyNetwork(subnets, CIDRBlock)
+		test := VerifyNoOverlap(subnets, CIDRBlock)
 		if test != nil {
 			t.Errorf("Failed test with %v\n", test)
 		}
@@ -419,7 +425,7 @@ func TestVerifyNetowrk(t *testing.T) {
 		if perr != nil {
 			t.Errorf("Bad test data %s\n", tc.CIDRBlock)
 		}
-		test := VerifyNetwork(subnets, CIDRBlock)
+		test := VerifyNoOverlap(subnets, CIDRBlock)
 		if test == nil {
 			t.Errorf("Test should have failed with CIDR %s\n", tc.CIDRBlock)
 		}
