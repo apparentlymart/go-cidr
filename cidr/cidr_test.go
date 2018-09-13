@@ -400,9 +400,10 @@ func TestVerifyNetowrk(t *testing.T) {
 		&testVerifyNetwork{
 			CIDRBlock: "10.42.0.0/24",
 			CIDRList: []string{
-				"10.42.0.0/24",
+
 				"10.42.0.16/28",
 				"10.42.0.32/28",
+				"10.42.0.0/24",
 			},
 		},
 	}
