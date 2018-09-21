@@ -18,55 +18,55 @@ func TestSubnet(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			Base:   "192.168.2.0/20",
 			Bits:   4,
 			Num:    6,
 			Output: "192.168.6.0/24",
 		},
-		Case{
+		{
 			Base:   "192.168.2.0/20",
 			Bits:   4,
 			Num:    0,
 			Output: "192.168.0.0/24",
 		},
-		Case{
+		{
 			Base:   "192.168.0.0/31",
 			Bits:   1,
 			Num:    1,
 			Output: "192.168.0.1/32",
 		},
-		Case{
+		{
 			Base:   "192.168.0.0/21",
 			Bits:   4,
 			Num:    7,
 			Output: "192.168.3.128/25",
 		},
-		Case{
+		{
 			Base:   "fe80::/48",
 			Bits:   16,
 			Num:    6,
 			Output: "fe80:0:0:6::/64",
 		},
-		Case{
+		{
 			Base:   "fe80::/49",
 			Bits:   16,
 			Num:    7,
 			Output: "fe80:0:0:3:8000::/65",
 		},
-		Case{
+		{
 			Base:  "192.168.2.0/31",
 			Bits:  2,
 			Num:   0,
 			Error: true, // not enough bits to expand into
 		},
-		Case{
+		{
 			Base:  "fe80::/126",
 			Bits:  4,
 			Num:   0,
 			Error: true, // not enough bits to expand into
 		},
-		Case{
+		{
 			Base:  "192.168.2.0/24",
 			Bits:  4,
 			Num:   16,
@@ -104,40 +104,40 @@ func TestHost(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			Range:  "192.168.2.0/20",
 			Num:    6,
 			Output: "192.168.0.6",
 		},
-		Case{
+		{
 			Range:  "192.168.0.0/20",
 			Num:    257,
 			Output: "192.168.1.1",
 		},
-		Case{
+		{
 			Range:  "2001:db8::/32",
 			Num:    1,
 			Output: "2001:db8::1",
 		},
-		Case{
+		{
 			Range: "192.168.1.0/24",
 			Num:   256,
 			Error: true, // only 0-255 will fit in 8 bits
 		},
-		Case{
+		{
 			Range:  "192.168.0.0/30",
 			Num:    -3,
 			Output: "192.168.0.1", // 4 address (0-3) in 2 bits; 3rd from end = 1
 		},
-		Case{
+		{
 			Range:  "192.168.0.0/30",
 			Num:    -4,
 			Output: "192.168.0.0", // 4 address (0-3) in 2 bits; 4th from end = 0
 		},
-		Case{
+		{
 			Range: "192.168.0.0/30",
 			Num:   -5,
-			Error: true, // 4 address (0-3) in 2 bits; cannot accomodate 5
+			Error: true, // 4 address (0-3) in 2 bits; cannot accommodate 5
 		},
 	}
 
@@ -170,17 +170,17 @@ func TestAddressRange(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			Range: "192.168.0.0/16",
 			First: "192.168.0.0",
 			Last:  "192.168.255.255",
 		},
-		Case{
+		{
 			Range: "192.168.0.0/17",
 			First: "192.168.0.0",
 			Last:  "192.168.127.255",
 		},
-		Case{
+		{
 			Range: "fe80::/64",
 			First: "fe80::",
 			Last:  "fe80::ffff:ffff:ffff:ffff",
@@ -210,39 +210,39 @@ func TestAddressCount(t *testing.T) {
 	}
 
 	cases := []Case{
-		Case{
+		{
 			Range: "192.168.0.0/16",
 			Count: 65536,
 		},
-		Case{
+		{
 			Range: "192.168.0.0/17",
 			Count: 32768,
 		},
-		Case{
+		{
 			Range: "192.168.0.0/32",
 			Count: 1,
 		},
-		Case{
+		{
 			Range: "192.168.0.0/31",
 			Count: 2,
 		},
-		Case{
+		{
 			Range: "0.0.0.0/0",
 			Count: 4294967296,
 		},
-		Case{
+		{
 			Range: "0.0.0.0/1",
 			Count: 2147483648,
 		},
-		Case{
+		{
 			Range: "::/65",
 			Count: 9223372036854775808,
 		},
-		Case{
+		{
 			Range: "::/128",
 			Count: 1,
 		},
-		Case{
+		{
 			Range: "::/127",
 			Count: 2,
 		},
@@ -262,13 +262,13 @@ func TestAddressCount(t *testing.T) {
 func TestIncDec(t *testing.T) {
 
 	testCase := [][]string{
-		[]string{"0.0.0.0", "0.0.0.1"},
-		[]string{"10.0.0.0", "10.0.0.1"},
-		[]string{"9.255.255.255", "10.0.0.0"},
-		[]string{"255.255.255.255", "0.0.0.0"},
-		[]string{"::", "::1"},
-		[]string{"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::"},
-		[]string{"2001:db8:c001:ba00::", "2001:db8:c001:ba00::1"},
+		{"0.0.0.0", "0.0.0.1"},
+		{"10.0.0.0", "10.0.0.1"},
+		{"9.255.255.255", "10.0.0.0"},
+		{"255.255.255.255", "0.0.0.0"},
+		{"::", "::1"},
+		{"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::"},
+		{"2001:db8:c001:ba00::", "2001:db8:c001:ba00::1"},
 	}
 
 	for _, tc := range testCase {
@@ -300,11 +300,11 @@ func TestIncDec(t *testing.T) {
 func TestPreviousSubnet(t *testing.T) {
 
 	testCases := [][]string{
-		[]string{"10.0.0.0/24", "9.255.255.0/24", "false"},
-		[]string{"100.0.0.0/26", "99.255.255.192/26", "false"},
-		[]string{"0.0.0.0/26", "255.255.255.192/26", "true"},
-		[]string{"2001:db8:e000::/36", "2001:db8:d000::/36", "false"},
-		[]string{"::/64", "ffff:ffff:ffff:ffff::/64", "true"},
+		{"10.0.0.0/24", "9.255.255.0/24", "false"},
+		{"100.0.0.0/26", "99.255.255.192/26", "false"},
+		{"0.0.0.0/26", "255.255.255.192/26", "true"},
+		{"2001:db8:e000::/36", "2001:db8:d000::/36", "false"},
+		{"::/64", "ffff:ffff:ffff:ffff::/64", "true"},
 	}
 	for _, tc := range testCases {
 		_, c1, _ := net.ParseCIDR(tc[0])
@@ -352,7 +352,7 @@ func TestVerifyNetowrk(t *testing.T) {
 	}
 
 	testCases := []*testVerifyNetwork{
-		&testVerifyNetwork{
+		{
 			CIDRBlock: "192.168.8.0/21",
 			CIDRList: []string{
 				"192.168.8.0/24",
@@ -371,7 +371,7 @@ func TestVerifyNetowrk(t *testing.T) {
 		},
 	}
 	failCases := []*testVerifyNetwork{
-		&testVerifyNetwork{
+		{
 			CIDRBlock: "192.168.8.0/21",
 			CIDRList: []string{
 				"192.168.8.0/24",
@@ -384,7 +384,7 @@ func TestVerifyNetowrk(t *testing.T) {
 				"192.168.12.128/26",
 			},
 		},
-		&testVerifyNetwork{
+		{
 			CIDRBlock: "192.168.8.0/21",
 			CIDRList: []string{
 				"192.168.7.0/24",
@@ -397,7 +397,7 @@ func TestVerifyNetowrk(t *testing.T) {
 				"192.168.12.128/26",
 			},
 		},
-		&testVerifyNetwork{
+		{
 			CIDRBlock: "10.42.0.0/24",
 			CIDRList: []string{
 
