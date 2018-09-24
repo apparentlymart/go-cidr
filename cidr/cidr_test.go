@@ -344,7 +344,7 @@ func TestPreviousSubnet(t *testing.T) {
 	}
 }
 
-func TestVerifyNetowrk(t *testing.T) {
+func TestVerifyNetwork(t *testing.T) {
 
 	type testVerifyNetwork struct {
 		CIDRBlock string
