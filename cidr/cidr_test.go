@@ -8,6 +8,15 @@ import (
 	"testing"
 )
 
+func parseCIDR(t *testing.T, cidr string) *net.IPNet {
+	ip, ipnet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		t.Fatalf("Bad test data %s (%v)\n", cidr, err)
+	}
+	ipnet.IP = ip
+	return ipnet
+}
+
 func TestSubnet(t *testing.T) {
 	type Case struct {
 		Base   string
@@ -76,7 +85,7 @@ func TestSubnet(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(fmt.Sprintf("%s %d %d", testCase.Base, testCase.Bits, testCase.Num), func (t *testing.T) {
-			_, base, _ := net.ParseCIDR(testCase.Base)
+			base := parseCIDR(t, testCase.Base)
 			gotNet, err := Subnet(base, testCase.Bits, testCase.Num)
 			desc := fmt.Sprintf("Subnet(%#v,%#v,%#v)", testCase.Base, testCase.Bits, testCase.Num)
 			if err != nil {
@@ -145,7 +154,7 @@ func TestHost(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(fmt.Sprintf("%s %d", testCase.Range, testCase.Num), func (t *testing.T) {
-			_, network, _ := net.ParseCIDR(testCase.Range)
+			network := parseCIDR(t, testCase.Range)
 			gotIP, err := Host(network, testCase.Num)
 			desc := fmt.Sprintf("Host(%#v,%#v)", testCase.Range, testCase.Num)
 			if err != nil {
@@ -193,7 +202,7 @@ func TestAddressRange(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.Range, func (t *testing.T) {
-			_, network, _ := net.ParseCIDR(testCase.Range)
+			network := parseCIDR(t, testCase.Range)
 			firstIP, lastIP := AddressRange(network)
 			desc := fmt.Sprintf("AddressRange(%#v)", testCase.Range)
 			gotFirstIP := firstIP.String()
@@ -255,7 +264,7 @@ func TestAddressCount(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.Range, func (t *testing.T) {
-			_, network, _ := net.ParseCIDR(testCase.Range)
+			network := parseCIDR(t, testCase.Range)
 			gotCount := AddressCount(network)
 			desc := fmt.Sprintf("AddressCount(%#v)", testCase.Range)
 			if gotCount != testCase.Count {
@@ -318,8 +327,8 @@ func TestPreviousNextSubnet(t *testing.T) {
 		[]string{"::/64", "ffff:ffff:ffff:ffff::/64", "true"},
 	}
 	for _, tc := range testCases {
-		_, c1, _ := net.ParseCIDR(tc[0])
-		_, c2, _ := net.ParseCIDR(tc[1])
+		c1 := parseCIDR(t, tc[0])
+		c2 := parseCIDR(t, tc[1])
 
 		t.Run(fmt.Sprintf("%s previous", tc[0]), func (t *testing.T) {
 			mask, _ := c1.Mask.Size()
@@ -425,16 +434,9 @@ func TestVerifyNetwork(t *testing.T) {
 		t.Run(fmt.Sprintf("%s %s (expect success)", tc.CIDRBlock, tc.CIDRList), func (t *testing.T) {
 			subnets := make([]*net.IPNet, len(tc.CIDRList))
 			for i, s := range tc.CIDRList {
-				_, n, err := net.ParseCIDR(s)
-				if err != nil {
-					t.Errorf("Bad test data %s\n", s)
-				}
-				subnets[i] = n
+				subnets[i] = parseCIDR(t, s)
 			}
-			_, CIDRBlock, perr := net.ParseCIDR(tc.CIDRBlock)
-			if perr != nil {
-				t.Errorf("Bad test data %s\n", tc.CIDRBlock)
-			}
+			CIDRBlock := parseCIDR(t, tc.CIDRBlock)
 			test := VerifyNoOverlap(subnets, CIDRBlock)
 			if test != nil {
 				t.Errorf("Failed test with %v\n", test)
@@ -445,16 +447,9 @@ func TestVerifyNetwork(t *testing.T) {
 		t.Run(fmt.Sprintf("%s %s (expect failure)", tc.CIDRBlock, tc.CIDRList), func (t *testing.T) {
 			subnets := make([]*net.IPNet, len(tc.CIDRList))
 			for i, s := range tc.CIDRList {
-				_, n, err := net.ParseCIDR(s)
-				if err != nil {
-					t.Errorf("Bad test data %s\n", s)
-				}
-				subnets[i] = n
+				subnets[i] = parseCIDR(t, s)
 			}
-			_, CIDRBlock, perr := net.ParseCIDR(tc.CIDRBlock)
-			if perr != nil {
-				t.Errorf("Bad test data %s\n", tc.CIDRBlock)
-			}
+			CIDRBlock := parseCIDR(t, tc.CIDRBlock)
 			test := VerifyNoOverlap(subnets, CIDRBlock)
 			if test == nil {
 				t.Errorf("Test should have failed with CIDR %s\n", tc.CIDRBlock)
