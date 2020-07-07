@@ -49,8 +49,36 @@ func Subnet(base *net.IPNet, newBits int, num int) (*net.IPNet, error) {
 	}, nil
 }
 
-// Host takes a parent CIDR range and turns it into a host IP address with
-// the given host number.
+// SubnetBig takes a parent CIDR range and creates a subnet within it with the
+// given number of additional prefix bits and the given network number. It
+// differs from Subnet in that it takes a *big.Int for the num, instead of an int.
+//
+// For example, 10.3.0.0/16, extended by 8 bits, with a network number of 5,
+// becomes 10.3.5.0/24 .
+func SubnetBig(base *net.IPNet, newBits int, num *big.Int) (*net.IPNet, error) {
+	ip := base.IP
+	mask := base.Mask
+
+	parentLen, addrLen := mask.Size()
+	newPrefixLen := parentLen + newBits
+
+	if newPrefixLen > addrLen {
+		return nil, fmt.Errorf("insufficient address space to extend prefix of %d by %d", parentLen, newBits)
+	}
+
+	maxNetNum := uint64(1<<uint64(newBits)) - 1
+	if num.Uint64() > maxNetNum {
+		return nil, fmt.Errorf("prefix extension of %d does not accommodate a subnet numbered %d", newBits, num)
+	}
+
+	return &net.IPNet{
+		IP:   insertNumIntoIP(ip, num, newPrefixLen),
+		Mask: net.CIDRMask(newPrefixLen, addrLen),
+	}, nil
+}
+
+// Host takes a parent CIDR range and turns it into a host IP address with the
+// given host number.
 //
 // For example, 10.3.0.0/16 with a host number of 2 gives 10.3.0.2.
 func Host(base *net.IPNet, num int) (net.IP, error) {
@@ -82,6 +110,41 @@ func Host(base *net.IPNet, num int) (net.IP, error) {
 		bitlength = 128
 	}
 	return insertNumIntoIP(ip, bigNum, bitlength), nil
+}
+
+// HostBig takes a parent CIDR range and turns it into a host IP address with
+// the given host number. It differs from Host in that it takes a *big.Int for
+// the num, instead of an int.
+//
+// For example, 10.3.0.0/16 with a host number of 2 gives 10.3.0.2.
+func HostBig(base *net.IPNet, num *big.Int) (net.IP, error) {
+	ip := base.IP
+	mask := base.Mask
+
+	parentLen, addrLen := mask.Size()
+	hostLen := addrLen - parentLen
+
+	maxHostNum := big.NewInt(int64(1))
+	maxHostNum.Lsh(maxHostNum, uint(hostLen))
+	maxHostNum.Sub(maxHostNum, big.NewInt(1))
+
+	numUint64 := big.NewInt(int64(num.Uint64()))
+	if num.Cmp(big.NewInt(0)) == -1 {
+		numUint64.Neg(num)
+		numUint64.Sub(numUint64, big.NewInt(int64(1)))
+		num.Sub(maxHostNum, numUint64)
+	}
+
+	if numUint64.Cmp(maxHostNum) == 1 {
+		return nil, fmt.Errorf("prefix of %d does not accommodate a host numbered %d", parentLen, num)
+	}
+	var bitlength int
+	if ip.To4() != nil {
+		bitlength = 32
+	} else {
+		bitlength = 128
+	}
+	return insertNumIntoIP(ip, num, bitlength), nil
 }
 
 // AddressRange returns the first and last addresses in the given CIDR range.
