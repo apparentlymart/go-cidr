@@ -135,6 +135,12 @@ func TestSubnetBig(t *testing.T) {
 			Output: "fe80:0:0:6::/64",
 		},
 		{
+			Base:   "fe80::/48",
+			Bits:   33,
+			Num:    big.NewInt(int64(6)),
+			Output: "fe80::3:0:0:0/81",
+		},
+		{
 			Base:   "fe80::/49",
 			Bits:   16,
 			Num:    big.NewInt(int64(7)),

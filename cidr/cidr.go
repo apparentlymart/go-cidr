@@ -28,25 +28,7 @@ import (
 // For example, 10.3.0.0/16, extended by 8 bits, with a network number
 // of 5, becomes 10.3.5.0/24 .
 func Subnet(base *net.IPNet, newBits int, num int) (*net.IPNet, error) {
-	ip := base.IP
-	mask := base.Mask
-
-	parentLen, addrLen := mask.Size()
-	newPrefixLen := parentLen + newBits
-
-	if newPrefixLen > addrLen {
-		return nil, fmt.Errorf("insufficient address space to extend prefix of %d by %d", parentLen, newBits)
-	}
-
-	maxNetNum := uint64(1<<uint64(newBits)) - 1
-	if uint64(num) > maxNetNum {
-		return nil, fmt.Errorf("prefix extension of %d does not accommodate a subnet numbered %d", newBits, num)
-	}
-
-	return &net.IPNet{
-		IP:   insertNumIntoIP(ip, big.NewInt(int64(num)), newPrefixLen),
-		Mask: net.CIDRMask(newPrefixLen, addrLen),
-	}, nil
+	return SubnetBig(base, newBits, big.NewInt(int64(num)))
 }
 
 // SubnetBig takes a parent CIDR range and creates a subnet within it with the
@@ -82,34 +64,7 @@ func SubnetBig(base *net.IPNet, newBits int, num *big.Int) (*net.IPNet, error) {
 //
 // For example, 10.3.0.0/16 with a host number of 2 gives 10.3.0.2.
 func Host(base *net.IPNet, num int) (net.IP, error) {
-	ip := base.IP
-	mask := base.Mask
-	bigNum := big.NewInt(int64(num))
-
-	parentLen, addrLen := mask.Size()
-	hostLen := addrLen - parentLen
-
-	maxHostNum := big.NewInt(int64(1))
-	maxHostNum.Lsh(maxHostNum, uint(hostLen))
-	maxHostNum.Sub(maxHostNum, big.NewInt(1))
-
-	numUint64 := big.NewInt(int64(bigNum.Uint64()))
-	if bigNum.Cmp(big.NewInt(0)) == -1 {
-		numUint64.Neg(bigNum)
-		numUint64.Sub(numUint64, big.NewInt(int64(1)))
-		bigNum.Sub(maxHostNum, numUint64)
-	}
-
-	if numUint64.Cmp(maxHostNum) == 1 {
-		return nil, fmt.Errorf("prefix of %d does not accommodate a host numbered %d", parentLen, num)
-	}
-	var bitlength int
-	if ip.To4() != nil {
-		bitlength = 32
-	} else {
-		bitlength = 128
-	}
-	return insertNumIntoIP(ip, bigNum, bitlength), nil
+	return HostBig(base, big.NewInt(int64(num)))
 }
 
 // HostBig takes a parent CIDR range and turns it into a host IP address with
