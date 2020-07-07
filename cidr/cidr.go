@@ -53,6 +53,8 @@ func SubnetBig(base *net.IPNet, newBits int, num *big.Int) (*net.IPNet, error) {
 		return nil, fmt.Errorf("prefix extension of %d does not accommodate a subnet numbered %d", newBits, num)
 	}
 
+	ip = checkIPv4(ip).Mask(mask)
+
 	return &net.IPNet{
 		IP:   insertNumIntoIP(ip, num, newPrefixLen),
 		Mask: net.CIDRMask(newPrefixLen, addrLen),
@@ -94,18 +96,22 @@ func HostBig(base *net.IPNet, num *big.Int) (net.IP, error) {
 		return nil, fmt.Errorf("prefix of %d does not accommodate a host numbered %d", parentLen, num)
 	}
 	var bitlength int
-	if ip.To4() != nil {
+	ipv4 := ip.To4()
+	if ipv4 != nil {
 		bitlength = 32
+		ip = ipv4
 	} else {
 		bitlength = 128
 	}
+	ip = ip.Mask(mask)
+
 	return insertNumIntoIP(ip, num, bitlength), nil
 }
 
 // AddressRange returns the first and last addresses in the given CIDR range.
 func AddressRange(network *net.IPNet) (net.IP, net.IP) {
 	// the first IP is easy
-	firstIP := network.IP
+	firstIP := network.IP.Mask(network.Mask)
 
 	// the last IP is the network address OR NOT the mask address
 	prefixLen, bits := network.Mask.Size()
@@ -170,7 +176,7 @@ func VerifyNoOverlap(subnets []*net.IPNet, CIDRBlock *net.IPNet) error {
 // just lower than the start of IPNet provided. If the IP space rolls over
 // then the second return value is true
 func PreviousSubnet(network *net.IPNet, prefixLen int) (*net.IPNet, bool) {
-	startIP := checkIPv4(network.IP)
+	startIP := checkIPv4(network.IP).Mask(network.Mask)
 	previousIP := make(net.IP, len(startIP))
 	copy(previousIP, startIP)
 	cMask := net.CIDRMask(prefixLen, 8*len(previousIP))
