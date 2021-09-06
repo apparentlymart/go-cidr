@@ -183,7 +183,7 @@ func PreviousSubnet(network *net.IPNet, prefixLen int) (*net.IPNet, bool) {
 }
 
 // NextSubnet returns the next available subnet of the desired mask size
-// starting for the maximum IP of the offset subnet
+// starting for the maximum IP of the offset subnet.
 // If the IP exceeds the maxium IP then the second return value is true
 func NextSubnet(network *net.IPNet, prefixLen int) (*net.IPNet, bool) {
 	_, currentLast := AddressRange(network)
