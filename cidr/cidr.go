@@ -107,6 +107,12 @@ func AddressRange(network *net.IPNet) (net.IP, net.IP) {
 	// the first IP is easy
 	firstIP := network.IP
 
+	// Normalize: if IP is IPv4-in-IPv6 (16 bytes) but mask is IPv4 (4 bytes),
+	// convert IP to 4-byte form so lengths are consistent.
+	if ip4 := firstIP.To4(); ip4 != nil {
+		firstIP = ip4
+	}
+
 	// the last IP is the network address OR NOT the mask address
 	prefixLen, bits := network.Mask.Size()
 	if prefixLen == bits {
