@@ -123,6 +123,12 @@ func TestSubnetBig(t *testing.T) {
 			Output: "192.168.0.1/32",
 		},
 		{
+			Base:  "192.168.0.0/31",
+			Bits:  1,
+			Num:   big.NewInt(int64(-1)),
+			Error: true, // negative subnet number not allowed
+		},
+		{
 			Base:   "192.168.0.0/21",
 			Bits:   4,
 			Num:    big.NewInt(int64(7)),

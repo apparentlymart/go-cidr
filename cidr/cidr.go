@@ -41,6 +41,10 @@ func SubnetBig(base *net.IPNet, newBits int, num *big.Int) (*net.IPNet, error) {
 	ip := base.IP
 	mask := base.Mask
 
+	if num.Sign() == -1 {
+		return nil, fmt.Errorf("subnet number must not be negative")
+	}
+
 	parentLen, addrLen := mask.Size()
 	newPrefixLen := parentLen + newBits
 
