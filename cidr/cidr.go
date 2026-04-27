@@ -83,16 +83,24 @@ func HostBig(base *net.IPNet, num *big.Int) (net.IP, error) {
 	maxHostNum.Lsh(maxHostNum, uint(hostLen))
 	maxHostNum.Sub(maxHostNum, big.NewInt(1))
 
-	numUint64 := big.NewInt(int64(num.Uint64()))
-	if num.Cmp(big.NewInt(0)) == -1 {
-		numUint64.Neg(num)
-		numUint64.Sub(numUint64, big.NewInt(int64(1)))
-		num.Sub(maxHostNum, numUint64)
-	}
+	minHostNum := big.NewInt(0)
+	minHostNum.Set(maxHostNum)
+	minHostNum.Neg(minHostNum)
+	minHostNum.Sub(minHostNum, big.NewInt(1))
 
-	if numUint64.Cmp(maxHostNum) == 1 {
+	if num.Cmp(maxHostNum) == 1 || num.Cmp(minHostNum) == -1 {
 		return nil, fmt.Errorf("prefix of %d does not accommodate a host numbered %d", parentLen, num)
 	}
+
+	// A negative number is counted from the end of the numbering space.
+	if num.Cmp(big.NewInt(0)) == -1 {
+		realNum := big.NewInt(0)
+		realNum.Set(maxHostNum)
+		realNum.Add(realNum, big.NewInt(1))
+		realNum.Add(realNum, num)
+		num = realNum
+	}
+
 	var bitlength int
 	if ip.To4() != nil {
 		bitlength = 32

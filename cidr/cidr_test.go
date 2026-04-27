@@ -265,7 +265,12 @@ func TestHost(t *testing.T) {
 }
 
 func TestHostBig(t *testing.T) {
-	cases := []struct {
+	maxU128Plus1 := big.NewInt(0)
+	if _, ok := maxU128Plus1.SetString("100000000000000000000000000000000", 16); !ok {
+		t.Fatal("failed to initialize maxU128Plus1")
+	}
+
+	tests := []struct {
 		Range  string
 		Num    *big.Int
 		Output string
@@ -316,26 +321,33 @@ func TestHostBig(t *testing.T) {
 			Num:    big.NewInt(int64(-2)),
 			Output: "fd9d:bc11:4020:0:ffff:ffff:ffff:fffe",
 		},
+		{
+			Range: "::/0",
+			Num:   maxU128Plus1,
+			Error: true, // host number requires 129 bits, so doesn't fit
+		},
 	}
 
-	for _, testCase := range cases {
-		_, network, _ := net.ParseCIDR(testCase.Range)
-		gotIP, err := HostBig(network, testCase.Num)
-		desc := fmt.Sprintf("HostBig(%v,%v)", testCase.Range, testCase.Num)
-		if err != nil {
-			if !testCase.Error {
-				t.Errorf("%s failed: %s", desc, err.Error())
-			}
-		} else {
-			got := gotIP.String()
-			if testCase.Error {
-				t.Errorf("%s = %s; want error", desc, got)
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s %s", test.Range, test.Num), func(t *testing.T) {
+			_, network, _ := net.ParseCIDR(test.Range)
+			gotIP, err := HostBig(network, test.Num)
+			desc := fmt.Sprintf("HostBig(%v,%v)", test.Range, test.Num)
+			if err != nil {
+				if !test.Error {
+					t.Errorf("%s failed: %s", desc, err.Error())
+				}
 			} else {
-				if got != testCase.Output {
-					t.Errorf("%s = %s; want %s", desc, got, testCase.Output)
+				got := gotIP.String()
+				if test.Error {
+					t.Errorf("%s = %s; want error", desc, got)
+				} else {
+					if got != test.Output {
+						t.Errorf("%s = %s; want %s", desc, got, test.Output)
+					}
 				}
 			}
-		}
+		})
 	}
 }
 
